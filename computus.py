@@ -1,5 +1,9 @@
 # Compute the date of Easter according to various calendars.
-# http://www.newadvent.org/cathen/05480b.htm
+#
+# Reference: http://www.newadvent.org/cathen/05480b.htm
+# Note that the table at the end of the section "Inaccuracy of the Metonic
+# Cycle" has a misprint: all "+1" indications on or after year 4500 should be
+# 100 years later than shown.  (The text above the table gets it right.)
 
 def gregorian_easter(year):
     pass
