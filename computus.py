@@ -9,8 +9,8 @@
 def gregorian_easter(year):
     pass
 
-def epact(year):
-    raw = gregorian_epact(year) + lunar_equation(year) + solar_equation(year)
+def gregorian_epact(year):
+    raw = base_greg_epact(year) + lunar_equation(year) + solar_equation(year)
     return raw % 30
 
 # The Metonic cycle merely counts by 11 mod 30, but somewhat arbitrarily
@@ -27,7 +27,7 @@ def metonic_epact(year):
 # By the time of the Gregorian calendar, the epacts had already slipped by
 # one day.
 
-def gregorian_epact(year):
+def base_greg_epact(year):
     return metonic_epact(year) + 1
 
 def golden_number(year):
@@ -108,6 +108,10 @@ numerals = [
 letters = [
         None, 'A', 'B', 'C', 'D', 'E', 'F', 'G' ]
 
+weekdays = [
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+        'Friday', 'Saturday' ]
+
 def name_month(month): return months[month]
 
 def name_epact(epact):
@@ -139,3 +143,30 @@ def second_gregorian_dominical(year):
     e = a + b + d - c
     f = e % 7
     return 7 - f
+
+# Currently a hack: we ignore the Jan-Feb Dominical Letter for a leap year.
+# Thus, we return the wrong values for those months.  That's fine if Easter
+# is all we care about.
+
+def gregorian_year(year):
+    year_dom = second_gregorian_dominical(year)
+    year_epact = gregorian_epact(year)
+    days = []
+    for cal in calendarium:
+        (month, day, dominical, epact) = cal
+        weekday = (dominical - year_dom) % 7
+        new_moon = (epact == year_epact)
+        days += [(month, day, weekday, new_moon)]
+    return days
+
+def format_day(day_tuple):
+    (month, day, weekday, new_moon) = day_tuple
+    mon = name_month(month)[0:3]
+    wee = weekdays[weekday][0:3]
+    formatted = '%s %s %2d' % (wee, mon, day)
+    if (new_moon): formatted += ' (new moon)'
+    return formatted
+
+def print_year(year):
+    for day in gregorian_year(year):
+        print format_day(day)
