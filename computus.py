@@ -105,9 +105,19 @@ numerals = [
         'xxi', 'xxii', 'xxiii', 'xxiv', 'xxv', 'xxvi', 'xxvii', 'xxviii',
         'xxix', 'xxx' ]
 
+letters = [
+        None, 'A', 'B', 'C', 'D', 'E', 'F', 'G' ]
+
 def name_month(month): return months[month]
 
 def format_cal_item(entry):
     (month, day, dominical, epact) = entry
     mon = name_month(month)[0:3]
+    epnum = numerals[epact]
+    if epact == -25: epnum = '25'
+    dom = letters[dominical]
+    return '%s %2d %s %s' % (mon, day, dom, epnum)
 
+def print_calendarium():
+    for cal in calendarium:
+        print format_cal_item(cal)
