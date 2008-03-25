@@ -110,14 +110,32 @@ letters = [
 
 def name_month(month): return months[month]
 
+def name_epact(epact):
+    if epact == -25: return '25'
+    return numerals[epact]
+
 def format_cal_item(entry):
     (month, day, dominical, epact) = entry
     mon = name_month(month)[0:3]
-    epnum = numerals[epact]
-    if epact == -25: epnum = '25'
+    epnum = name_epact(epact)
     dom = letters[dominical]
     return '%s %2d %s %s' % (mon, day, dom, epnum)
 
 def print_calendarium():
     for cal in calendarium:
         print format_cal_item(cal)
+
+# The "second" Dominical Letter is the one that takes effect after the leap
+# day of a leap year.  This formula finds the (only) Dominical Letter of a
+# non-leap year, or the second Dominical Letter of a leap year.
+#
+# Reference: http://www.newadvent.org/cathen/05109a.htm
+
+def second_gregorian_dominical(year):
+    a = year + 1
+    b = year / 4
+    c = year / 100 - 16
+    d = c / 4
+    e = a + b + d - c
+    f = e % 7
+    return 7 - f
