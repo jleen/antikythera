@@ -41,15 +41,7 @@ def golden_number(year):
 def lunar_equation(year):
     d = (year - 1500) / 2500
     r = (year - 1500) % 2500
-    if r < 300:  return 8 * d
-    if r < 600:  return 8 * d + 1
-    if r < 900:  return 8 * d + 2
-    if r < 1200: return 8 * d + 3
-    if r < 1500: return 8 * d + 4
-    if r < 1800: return 8 * d + 5
-    if r < 2100: return 8 * d + 6
-    if r < 2400: return 8 * d + 7
-    return 8 * d + 8
+    return (8 * d) + (r / 300)
 
 # Compensate for the "missing" leap years in the Gregorian calendar.
 
@@ -57,10 +49,7 @@ def solar_equation(year):
     if year < 1600: return 0
     d = (year - 1600) / 400
     r = (year - 1600) % 400
-    if r < 100: return  0 - (3 * d)
-    if r < 200: return -1 - (3 * d)
-    if r < 300: return -2 - (3 * d)
-    return -3 - (3 * d)
+    return (-3 * d) - (r / 100)
 
 
 def month_length(month):
@@ -104,5 +93,21 @@ def build_calendarium():
 
     return calendarium
 
-
 calendarium = build_calendarium()
+
+months = [
+        None, 'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December' ]
+
+numerals = [
+        '*', 'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x',
+        'xi', 'xii', 'xiii', 'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'xix', 'xx',
+        'xxi', 'xxii', 'xxiii', 'xxiv', 'xxv', 'xxvi', 'xxvii', 'xxviii',
+        'xxix', 'xxx' ]
+
+def name_month(month): return months[month]
+
+def format_cal_item(entry):
+    (month, day, dominical, epact) = entry
+    mon = name_month(month)[0:3]
+
