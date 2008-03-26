@@ -6,8 +6,56 @@
 # Cycle" has a misprint: all "+1" indications on or after year 4500 should be
 # 100 years later than shown.  (The text above the table gets it right.)
 
+
+##############################################
+# Main entry point for the Gregorian calendar.
+
 def gregorian_easter(year):
-    pass
+    year_data = gregorian_year(year)
+    i_vernal_equinox = find_vernal_equinox(year_data)
+    i_paschal_new_moon = find_new_moon_after(i_vernal_equinox - 13, year_data)
+
+    # (Actually this is the day *after* the Paschal full moon, just as the rule
+    # calls for.)
+
+    i_paschal_full_moon = i_paschal_new_moon + 14
+    i_easter = find_first_sunday_after(i_paschal_full_moon, year_data)
+    return year_data[i_easter]
+
+
+########################################
+# Boring functions to scan the calendar.
+
+def find_vernal_equinox(year_data):
+    i = 0
+    while 1:
+        (month, day, weekday, new_moon) = year_data[i]
+        if month == 3 and day == 21: return i
+        i = i + 1
+
+def find_new_moon_after(i, year_data):
+    while 1:
+        (month, day, weekday, new_moon) = year_data[i]
+        if new_moon: return i
+        i = i + 1
+
+def find_first_sunday_after(i, year_data):
+    while 1:
+        (month, day, weekday, new_moon) = year_data[i]
+        if weekday == 0: return i
+        i = i + 1
+
+
+##################################################
+# The Metonic cycle and its Gregorian refinements.
+
+def golden_number(year):
+    r = (1 + year) % 19
+    if r == 0: return 19
+    else: return r
+
+# The Gregorian epact is a base value determined in 1584, plus some
+# refinements to correct for "jitter" in the lunar and solar calendars.
 
 def gregorian_epact(year):
     raw = base_greg_epact(year) + lunar_equation(year) + solar_equation(year)
@@ -15,11 +63,9 @@ def gregorian_epact(year):
 
 # The Metonic cycle merely counts by 11 mod 30, but somewhat arbitrarily
 # loops back to the beginning after 19 entries, not the expected 30.
-# Classically the Cycle is 1-based; I transpose Meton's final entry to the
-# head of the list to make it 0-based.
 
-metonic_cycle = [
-        18, 0, 11, 22, 3, 14, 25, 6, 17, 28, 9, 20, 1, 12, 23, 4, 15, 26, 7 ]
+metonic_cycle = [ None,
+        0, 11, 22, 3, 14, 25, 6, 17, 28, 9, 20, 1, 12, 23, 4, 15, 26, 7, 18 ]
 
 def metonic_epact(year):
     return metonic_cycle[golden_number(year)]
@@ -29,11 +75,6 @@ def metonic_epact(year):
 
 def base_greg_epact(year):
     return metonic_epact(year) + 1
-
-def golden_number(year):
-    r = (1 + year) % 19
-    if r == 0: return 19
-    else: return r
 
 # Compensate for the Metonic Cycle's built-in inaccuracy: the ratio of a lunar
 # to a solar year isn't really a rational number!
@@ -52,6 +93,9 @@ def solar_equation(year):
     return (-3 * d) - (r / 100)
 
 
+###########################################
+# Construct the static liturgical calendar.
+
 def month_length(month):
     if month == 2: return 28
     if month in [ 1, 3, 5, 7, 8, 10, 12]: return 31
@@ -69,7 +113,7 @@ def build_calendarium():
         calendarium += [ (month, day, dominical, epact) ]
 
         # We'll use -25 to indicate the special label for epact 24/25
-        # conflict resolution.
+        # conflict resolution.  (See hack25, below.)
 
         if ((lunation_parity == 1 and epact == 25) or
                 (lunation_parity == 0 and epact == 26)):
@@ -118,16 +162,9 @@ def name_epact(epact):
     if epact == -25: return '25'
     return numerals[epact]
 
-def format_cal_item(entry):
-    (month, day, dominical, epact) = entry
-    mon = name_month(month)[0:3]
-    epnum = name_epact(epact)
-    dom = letters[dominical]
-    return '%s %2d %s %s' % (mon, day, dom, epnum)
 
-def print_calendarium():
-    for cal in calendarium:
-        print format_cal_item(cal)
+#######################################
+# Build the yearly liturgical calendar.
 
 # The "second" Dominical Letter is the one that takes effect after the leap
 # day of a leap year.  This formula finds the (only) Dominical Letter of a
@@ -147,17 +184,70 @@ def second_gregorian_dominical(year):
 # Currently a hack: we ignore the Jan-Feb Dominical Letter for a leap year.
 # Thus, we return the wrong values for those months.  That's fine if Easter
 # is all we care about.
+#
+# Note that we're not inserting the leap day.  This is *not* a bug.  In the
+# liturgical calendar, like the Roman calendar on which it's based, the
+# intercalary day is treated as the first "half" of a 48-hour day, which is
+# February 24, of all things.  (See Wikipedia s.v. "bissextile.")  The day of
+# the week *does* change at the 24-hour mark, however, and that's when the leap
+# year's second Dominical Letter takes effect.
+#
+# This is all very silly, but the important thing is that for the sake of
+# the computation of moons, we always count 28 days in February.  When
+# February 24 is doubled, its moon phase is doubled with it.
 
 def gregorian_year(year):
     year_dom = second_gregorian_dominical(year)
     year_epact = gregorian_epact(year)
+
+    # This is a hack too, but it's Aloysius Lilius's hack, not mine.  Somehow
+    # it was considered very important that you never get the same new moon
+    # two years in a row, so when that would happen, you move the second new
+    # moon.
+
+    hack25 = (year_epact == 25 and golden_number(year) > 11)
+
     days = []
+    this_month = None
+    this_day = None
+    this_weekday = None
+    this_new_moon = None
+
     for cal in calendarium:
         (month, day, dominical, epact) = cal
-        weekday = (dominical - year_dom) % 7
-        new_moon = (epact == year_epact)
-        days += [(month, day, weekday, new_moon)]
+
+        if (this_month != month) or (this_day != day):
+            if this_month != None:
+                days += [(this_month, this_day, this_weekday, this_new_moon)]
+            this_month = month
+            this_day = day
+            this_weekday = (dominical - year_dom) % 7
+            this_new_moon = False
+
+        if hack25:
+            if epact == -25: this_new_moon = True
+        else:
+            if epact == year_epact: this_new_moon = True
+
+    # Don't forget the last day of the year.
+
+    days += [(this_month, this_day, this_weekday, this_new_moon)]
     return days
+
+
+##################
+# Output niceties.
+
+def format_cal_item(entry):
+    (month, day, dominical, epact) = entry
+    mon = name_month(month)[0:3]
+    epnum = name_epact(epact)
+    dom = letters[dominical]
+    return '%s %2d %s %s' % (mon, day, dom, epnum)
+
+def print_calendarium():
+    for cal in calendarium:
+        print format_cal_item(cal)
 
 def format_day(day_tuple):
     (month, day, weekday, new_moon) = day_tuple
@@ -170,3 +260,7 @@ def format_day(day_tuple):
 def print_year(year):
     for day in gregorian_year(year):
         print format_day(day)
+
+def format_easter_entry(year):
+    day = gregorian_easter(year)
+    return '%s, %d' % (format_day(day), year)
