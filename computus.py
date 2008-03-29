@@ -11,7 +11,12 @@
 # Main entry point for the Gregorian calendar.
 
 def gregorian_easter(year):
-    year_data = gregorian_year(year)
+    return easter(gregorian_year(year))
+
+def julian_easter(year):
+    return julian_to_gregorian(easter(julian_year(year)))
+
+def easter(year_data):
     i_vernal_equinox = find_vernal_equinox(year_data)
     i_paschal_new_moon = find_new_moon_after(i_vernal_equinox - 13, year_data)
 
@@ -181,6 +186,9 @@ def second_gregorian_dominical(year):
     f = e % 7
     return 7 - f
 
+def second_julian_dominical(year):
+    # TODO
+
 # Currently a hack: we ignore the Jan-Feb Dominical Letter for a leap year.
 # Thus, we return the wrong values for those months.  That's fine if Easter
 # is all we care about.
@@ -206,7 +214,14 @@ def gregorian_year(year):
     # moon.
 
     hack25 = (year_epact == 25 and golden_number(year) > 11)
+    return generic_year(year_dom, year_epact, hack25)
 
+def julian_year(year):
+    year_dom = second_julian_dominical(year)
+    year_epact = metonic_epact(year)
+    return generic_year(year_dom, year_epact, hack25 = False)
+
+def generic_year(year_dom, year_epact, hack25):
     days = []
     this_month = None
     this_day = None
@@ -234,6 +249,8 @@ def gregorian_year(year):
     days += [(this_month, this_day, this_weekday, this_new_moon)]
     return days
 
+def julian_to_gregorian(date):
+    # TODO
 
 ##################
 # Output niceties.
@@ -261,6 +278,5 @@ def print_year(year):
     for day in gregorian_year(year):
         print format_day(day)
 
-def format_easter_entry(year):
-    day = gregorian_easter(year)
+def format_easter_entry(day, year):
     return '%s, %d' % (format_day(day), year)
