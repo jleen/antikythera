@@ -187,7 +187,38 @@ def second_gregorian_dominical(year):
     return 7 - f
 
 def second_julian_dominical(year):
-    # TODO
+    sol_num = solar_number(year)
+    if sol_num ==  1: return 6
+    if sol_num ==  2: return 5
+    if sol_num ==  3: return 4
+    if sol_num ==  4: return 3
+    if sol_num ==  5: return 1
+    if sol_num ==  6: return 7
+    if sol_num ==  7: return 6
+    if sol_num ==  8: return 5
+    if sol_num ==  9: return 3
+    if sol_num == 10: return 2
+    if sol_num == 11: return 1
+    if sol_num == 12: return 7
+    if sol_num == 13: return 5
+    if sol_num == 14: return 4
+    if sol_num == 15: return 3
+    if sol_num == 16: return 2
+    if sol_num == 17: return 7
+    if sol_num == 18: return 6
+    if sol_num == 19: return 5
+    if sol_num == 20: return 4
+    if sol_num == 21: return 2
+    if sol_num == 22: return 1
+    if sol_num == 23: return 7
+    if sol_num == 24: return 6
+    if sol_num == 25: return 4
+    if sol_num == 26: return 3
+    if sol_num == 27: return 2
+    if sol_num == 28: return 1
+
+def solar_number(year):
+    return ((year + 8) % 28) + 1
 
 # Currently a hack: we ignore the Jan-Feb Dominical Letter for a leap year.
 # Thus, we return the wrong values for those months.  That's fine if Easter
@@ -250,7 +281,40 @@ def generic_year(year_dom, year_epact, hack25):
     return days
 
 def julian_to_gregorian(date):
-    # TODO
+    return jd_to_gregorian(julian_to_jd(date))
+
+def julian_to_jd(date):
+    (year, month, day) = date
+    return 367 * year - int(7 * (year + 5001 + int((month - 9) / 7.0)) / 4.0) \
+            + int(275 * month / 9.0) + day + 1729777
+
+def gregorian_to_jd(date):
+    (year, month, day) = date
+    return 367 * year - int(7 * (year + int((month + 9) / 12.0)) / 4.0) \
+            - int(3 * (int((year + (month - 9) / 7.0) / 100.0) + 1) / 4) \
+            + int(275 * month / 9) + day + 1721029
+
+def jd_to_julian(jd):
+    raise 'wheeeee!'
+
+def jd_to_gregorian(jd):
+    j = jd + 32044
+    g = j / 146097
+    dg = j % 146097
+    c = (dg / 36524 + 1) * 3 / 4
+    dc = dg - c * 36524
+    b = dc / 1461
+    db = dc % 1461
+    a = (db / 365 + 1) * 3 / 4
+    da = db - a * 365
+    y = g * 400 + c * 100 + b * 4 + a
+    m = (da * 5 + 308) / 153 - 2
+    d = da - (m + 4) * 153 / 5 + 122
+    year = y - 4800 + (m + 2) / 12
+    month = (m + 2) % 12 + 1
+    day = d + 1
+    return (year, month, day)
+
 
 ##################
 # Output niceties.
