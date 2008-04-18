@@ -6,6 +6,7 @@
 # Cycle" has a misprint: all "+1" indications on or after year 4500 should be
 # 100 years later than shown.  (The text above the table gets it right.)
 
+import hebrew
 
 ##############################################
 # Main entry point for the Gregorian calendar.
@@ -13,11 +14,14 @@
 def gregorian_easter(year):
     return easter(gregorian_year(year))
 
+# TODO: This still isn't returning the right day.  Grruuuuu~~~!
+# (At least it's only returning Sundays now.)
+
 def julian_easter(year):
-    presumptive_easter = julian_to_jd(easter(julian_year(year)))
-    passover_begins = hebrew_to_jd(15, 'nisan')
-    if passover_begins > presumptive_easter:
-        presumptive_easter = add_sevens()
+    presumptive_easter = julian_to_jd((year, ) + easter(julian_year(year)))
+    passover_begins = hebrew.pesach_jd(hebrew.ad_to_am_at_pesach(year))
+    while (passover_begins > presumptive_easter):
+        presumptive_easter += 7
     return jd_to_gregorian(presumptive_easter)
 
 def easter(year_data):
@@ -29,7 +33,7 @@ def easter(year_data):
 
     i_paschal_full_moon = i_paschal_new_moon + 14
     i_easter = find_first_sunday_after(i_paschal_full_moon, year_data)
-    return year_data[i_easter]
+    return year_data[i_easter][0:2]
 
 
 ########################################
@@ -287,13 +291,11 @@ def generic_year(year_dom, year_epact, hack25):
 def julian_to_gregorian(date):
     return jd_to_gregorian(julian_to_jd(date))
 
-def julian_to_jd(date):
-    (year, month, day) = date
+def julian_to_jd((year, month, day)):
     return 367 * year - int(7 * (year + 5001 + int((month - 9) / 7.0)) / 4.0) \
             + int(275 * month / 9.0) + day + 1729777
 
-def gregorian_to_jd(date):
-    (year, month, day) = date
+def gregorian_to_jd((year, month, day)):
     return 367 * year - int(7 * (year + int((month + 9) / 12.0)) / 4.0) \
             - int(3 * (int((year + (month - 9) / 7.0) / 100.0) + 1) / 4) \
             + int(275 * month / 9) + day + 1721029
