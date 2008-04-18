@@ -51,6 +51,17 @@ def rosh_hashanah(year):
 def is_leap(year):
     return (year % 19) in [ 0, 3, 6, 8, 11, 14, 17 ]
 
-def wd_to_jd(weeks, days):
+def wd_to_jd((weeks, days)):
     return weeks * 7 + days + 347996
 
+days_to_pesach = 30 + 29 + 30 + 29 + 30 + 29 + 14
+
+def pesach_jd(year):
+    rosh_hashanah_jd = wd_to_jd(rosh_hashanah(year))
+    next_rh_jd = wd_to_jd(rosh_hashanah(year + 1))
+    adar_i = 30 * is_leap(year)
+    excess = (next_rh_jd - rosh_hashanah_jd) - (354 + adar_i)
+    return rosh_hashanah_jd + adar_i + excess + days_to_pesach
+
+def ad_to_am_at_pesach(ad):
+    return ad + 3760

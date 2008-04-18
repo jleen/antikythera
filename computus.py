@@ -14,7 +14,11 @@ def gregorian_easter(year):
     return easter(gregorian_year(year))
 
 def julian_easter(year):
-    return julian_to_gregorian(easter(julian_year(year)))
+    presumptive_easter = julian_to_jd(easter(julian_year(year)))
+    passover_begins = hebrew_to_jd(15, 'nisan')
+    if passover_begins > presumptive_easter:
+        presumptive_easter = add_sevens()
+    return jd_to_gregorian(presumptive_easter)
 
 def easter(year_data):
     i_vernal_equinox = find_vernal_equinox(year_data)
