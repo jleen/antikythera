@@ -14,19 +14,20 @@ import hebrew
 def gregorian_easter(year):
     return easter(gregorian_year(year))
 
-# TODO: This still isn't returning the right day.  Grruuuuu~~~!
-# (At least it's only returning Sundays now.)
-
 def julian_easter(year):
     presumptive_easter = julian_to_jd((year, ) + easter(julian_year(year)))
+    print 'Before Passover correction:', jd_to_gregorian(presumptive_easter)
     passover_begins = hebrew.pesach_jd(hebrew.ad_to_am_at_pesach(year))
+    print '           Passover begins:', jd_to_gregorian(passover_begins)
     while (passover_begins > presumptive_easter):
         presumptive_easter += 7
+    print ' After Passover correction:', jd_to_gregorian(presumptive_easter)
     return jd_to_gregorian(presumptive_easter)
 
 def easter(year_data):
     i_vernal_equinox = find_vernal_equinox(year_data)
     i_paschal_new_moon = find_new_moon_after(i_vernal_equinox - 13, year_data)
+    print 'Paschal new moon:', year_data[i_paschal_new_moon]
 
     # (Actually this is the day *after* the Paschal full moon, just as the rule
     # calls for.)
@@ -257,7 +258,8 @@ def gregorian_year(year):
 
 def julian_year(year):
     year_dom = second_julian_dominical(year)
-    year_epact = metonic_epact(year)
+    # TODO: I have no idea why the -2 is necessary.
+    year_epact = metonic_epact(year - 2)
     return generic_year(year_dom, year_epact, hack25 = False)
 
 def generic_year(year_dom, year_epact, hack25):
@@ -345,7 +347,7 @@ def format_day(day_tuple):
     return formatted
 
 def print_year(year):
-    for day in gregorian_year(year):
+    for day in year:
         print format_day(day)
 
 def format_easter_entry(day, year):
