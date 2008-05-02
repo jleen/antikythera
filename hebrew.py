@@ -100,14 +100,39 @@ def is_leap(year):
 # them is to just compute next year's Rosh Hashanah and see how many days are
 # between now and then.
 
+length_4 = 30 + 29 + 30 + 29
+length_shevat = 30
+length_adar_i = 30
+length_adar = 29
+length_nisan = 30
+length_iyar = 29
+
 days_to_pesach = 30 + 29 + 30 + 29 + 30 + 29 + 14
 
-def pesach_jd(year):
+def shevat_jd(year):
     rosh_hashanah_jd = wd_to_jd(rosh_hashanah(year))
     next_rh_jd = wd_to_jd(rosh_hashanah(year + 1))
-    adar_i = 30 * is_leap(year)
+    adar_i = length_adar_i * is_leap(year)
     excess = (next_rh_jd - rosh_hashanah_jd) - (354 + adar_i)
-    return rosh_hashanah_jd + adar_i + excess + days_to_pesach
+    return rosh_hashanah_jd + length_4 + excess
+
+def adar_jd(year):
+    return shevat_jd(year) + length_shevat + (length_adar_i * is_leap(year))
+
+def adar_i_jd(year):
+    return shevat_jd(year) + length_shevat
+
+def nisan_jd(year):
+    return adar_jd(year) + length_adar
+
+def pesach_jd(year):
+    return nisan_jd(year) + 14
+
+def iyar_jd(year):
+    return nisan_jd(year) + length_nisan
+
+def sivan_jd(year):
+    return iyar_jd(year) + length_iyar
 
 # Cheesy Anno Domini to Anno Mundi conversion which punts the issue of the
 # different New Years' Days by being pegged to Passover.

@@ -8,43 +8,75 @@
 
 import hebrew
 
-##############################################
-# Main entry point for the Gregorian calendar.
+
+####################################
+# Main entry point for the computus.
 
 def gregorian_easter(year):
-    return easter(gregorian_year(year))
+    easter_data = easter(gregorian_year(year))
+
+    easter_day = gregorian_to_jd((year, ) + easter_data['easter'])
+    equinox = gregorian_to_jd((year, ) + easter_data['equinox'])
+    new_moon = gregorian_to_jd((year, ) + easter_data['new_moon'])
+    full_moon = new_moon + 13
+
+    return {
+            'gregorian_easter' : easter_day,
+            'gregorian_equinox' : equinox,
+            'gregorian_new_moon' : new_moon,
+            'gregorian_full_moon' : full_moon
+            }
 
 def julian_easter(year):
-    presumptive_easter = julian_to_jd((year, ) + easter(julian_year(year)))
-    print 'Before Passover correction:', jd_to_gregorian(presumptive_easter)
+    easter_data = easter(julian_year(year))
+    presumptive_easter = julian_to_jd((year, ) + easter_data['easter'])
+    equinox = julian_to_jd((year, ) + easter_data['equinox'])
+    new_moon = julian_to_jd((year, ) + easter_data['new_moon'])
     passover_begins = hebrew.pesach_jd(hebrew.ad_to_am_at_pesach(year))
-    print '           Passover begins:', jd_to_gregorian(passover_begins)
+
+    easter_day = presumptive_easter
+    needed_passover_correction = False
     while (passover_begins > presumptive_easter):
-        presumptive_easter += 7
-    print ' After Passover correction:', jd_to_gregorian(presumptive_easter)
-    return jd_to_gregorian(presumptive_easter)
+        needed_passover_correction = True
+        easter_day += 7
+
+    return {
+            'julian_easter' : easter_day,
+            'julian_uncorrected_easter' : presumptive_easter,
+            'julian_equinox' : equinox,
+            'julian_new_moon' : new_moon,
+            'julian_full_moon' : new_moon + 13,
+            'julian_passover_correction' : needed_passover_correction,
+            'passover' : passover_begins
+            }
 
 def easter(year_data):
     i_vernal_equinox = find_vernal_equinox(year_data)
     i_paschal_new_moon = find_new_moon_after(i_vernal_equinox - 13, year_data)
-    print 'Paschal new moon:', year_data[i_paschal_new_moon]
 
     # (Actually this is the day *after* the Paschal full moon, just as the rule
     # calls for.)
 
     i_paschal_full_moon = i_paschal_new_moon + 14
     i_easter = find_first_sunday_after(i_paschal_full_moon, year_data)
-    return year_data[i_easter][0:2]
+    return {
+            'easter': year_data[i_easter][0:2],
+            'equinox': year_data[i_vernal_equinox][0:2],
+            'new_moon': year_data[i_paschal_new_moon][0:2]
+            }
 
 
 ########################################
 # Boring functions to scan the calendar.
 
 def find_vernal_equinox(year_data):
+    return find_day(year_data, 3, 21)
+
+def find_day(year_data, target_month, target_day):
     i = 0
     while 1:
         (month, day, weekday, new_moon) = year_data[i]
-        if month == 3 and day == 21: return i
+        if month == target_month and day == target_day: return i
         i = i + 1
 
 def find_new_moon_after(i, year_data):
