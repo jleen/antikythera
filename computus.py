@@ -47,7 +47,9 @@ def julian_easter(year):
             'julian_new_moon' : new_moon,
             'julian_full_moon' : new_moon + 13,
             'julian_passover_correction' : needed_passover_correction,
-            'passover' : passover_begins
+            'passover' : passover_begins,
+            'passover_prep' : passover_begins - 1,
+            'nissan' : passover_begins - 14
             }
 
 def easter(year_data):

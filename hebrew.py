@@ -106,6 +106,7 @@ length_adar_i = 30
 length_adar = 29
 length_nisan = 30
 length_iyar = 29
+length_sivan = 30
 
 days_to_pesach = 30 + 29 + 30 + 29 + 30 + 29 + 14
 
@@ -133,6 +134,9 @@ def iyar_jd(year):
 
 def sivan_jd(year):
     return iyar_jd(year) + length_iyar
+
+def tamuz_jd(year):
+    return sivan_jd(year) + length_sivan
 
 # Cheesy Anno Domini to Anno Mundi conversion which punts the issue of the
 # different New Years' Days by being pegged to Passover.

@@ -4,10 +4,22 @@
 import computus
 import hebrew
 
+import cgi
+import cgitb
+
 phase_names = [ 'New', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous',
         'Full', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent' ]
 
+def get():
+    cgitb.enable()
+    form = cgi.FieldStorage()
+
+    print 'Content-type: text/html'
+    print
+    interleave(int(form["year"].value))
+
 def interleave(year):
+
     start_date = computus.gregorian_to_jd((year, 3, 1))
     end_date = computus.gregorian_to_jd((year, 5, 31))
 
@@ -26,22 +38,63 @@ def interleave(year):
     offset = i_julian - i
     hebrew_offset = i_hebrew - i
 
+    # Find Sunday.
+    while gregorian[i][3] != 0: i += 1
+
+    print """
+<div align="center">
+<table border="1" cellspacing="0">
+<tr>
+<th width="100">Sunday</th>
+<th width="100">Monday</th>
+<th width="100">Tuesday</th>
+<th width="100">Wednesday</th>
+<th width="100">Thursday</th>
+<th width="100">Friday</th>
+<th width="100">Saturday</th>
+"""
     done = False
     while not done:
+        if gregorian[i][3] == 0:
+            print '</tr>'
+            print '<tr>'
+        print '<td height="100" valign="top">'
         jd = gregorian[i][0]
         if jd == end_date: done = True
-        print 'Day', jd
-        print 'J',
-        print_calendar_entry(julian[i + offset])
         print 'G',
         print_calendar_entry(gregorian[i])
+        print '<br>'
+        print 'J',
+        print_calendar_entry(julian[i + offset])
+        print '<br>'
         print 'H',
         print_hebrew_calendar_entry(
                 hebrew_cal[i + hebrew_offset], gregorian[i][3])
+        print '<br>'
         annotations = consult_compendium(compendium, jd)
-        for a in annotations: print a + '!'
-        print
+        j_easter = False
+        j_pre_easter = False
+        for a in annotations:
+            if a == 'gregorian_equinox': print 'Equinox (W)'
+            elif a == 'gregorian_full_moon': print 'Full Moon (W)'
+            elif a == 'gregorian_easter': print 'Easter (W)'
+            elif a == 'julian_equinox': print 'Equinox (E)'
+            elif a == 'julian_full_moon': print 'Full Moon (E)'
+            elif a == 'julian_easter':
+                print 'Easter (E)'
+                j_easter = True
+            elif a == 'julian_uncorrected_easter': j_pre_easter = True
+            elif a == 'passover': print 'Passover'
+            elif a == 'passover_prep': print 'Full Moon (H)'
+            if j_pre_easter and not j_easter: print 'Not Easter (E)'
+        print '</td>'
         i += 1
+
+    print '''
+</tr>
+</table>
+</div>
+'''
 
 def consult_compendium(compendium, jd):
     annotations = []
@@ -70,6 +123,7 @@ def hebrew_calendar(year):
     nisan_jd = hebrew.nisan_jd(year)
     iyar_jd = hebrew.iyar_jd(year)
     sivan_jd = hebrew.sivan_jd(year)
+    tamuz_jd = hebrew.tamuz_jd(year)
 
     calendar = []
     day = 1
@@ -95,6 +149,9 @@ def hebrew_calendar(year):
             month = 5
             day = 1
         elif jd == sivan_jd:
+            month = 6
+            day = 1
+        elif jd == tamuz_jd:
             break
         else:
             day += 1
@@ -161,17 +218,13 @@ def calendar(initial_jd, year_data, leap):
 
 def print_calendar_entry(entry):
     (jd, month, day, weekday, phase) = entry
-    day_name = computus.weekdays[weekday][0:3]
-    mon_name = computus.months[month][0:3]
-    phase_name = phase_names[phase]
-    print '%s %s %2d %s' % (day_name, mon_name, day, phase_name)
+    mon_name = computus.months[month]
+    print '%s %d' % (mon_name, day)
 
 def print_hebrew_calendar_entry(entry, weekday):
     (jd, month, day, phase) = entry
-    day_name = computus.weekdays[weekday][0:3]
     mon_name = hebrew_month_names[month]
-    phase_name = phase_names[phase]
-    print '%s %d %s %s' % (day_name, day, mon_name, phase_name)
+    print '%d %s' % (day, mon_name)
 
 def print_calendar(calendar):
     for entry in calendar: print_calendar_entry(entry)
