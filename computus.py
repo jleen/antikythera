@@ -333,8 +333,8 @@ def julian_to_jd((year, month, day)):
 
 def gregorian_to_jd((year, month, day)):
     return 367 * year - int(7 * (year + int((month + 9) / 12.0)) / 4.0) \
-            - int(3 * (int((year + (month - 9) / 7.0) / 100.0) + 1) / 4) \
-            + int(275 * month / 9) + day + 1721029
+            - int(3 * (int((year + (month - 9) / 7.0) / 100.0) + 1) / 4.0) \
+            + int(275 * month / 9.0) + day + 1721029
 
 def jd_to_julian(jd):
     raise 'wheeeee!'

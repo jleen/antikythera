@@ -6,6 +6,7 @@ import hebrew
 
 import cgi
 import cgitb
+import os
 
 phase_names = [ 'New', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous',
         'Full', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent' ]
@@ -16,12 +17,15 @@ def get():
 
     print 'Content-type: text/html'
     print
-    interleave(int(form["year"].value))
+    interleave(int(os.environ["PATH_INFO"][1:]))
 
 def interleave(year):
 
     start_date = computus.gregorian_to_jd((year, 3, 1))
     end_date = computus.gregorian_to_jd((year, 5, 31))
+
+    print 'start ' + str(start_date) + '<br>'
+    print 'end ' + str(end_date) + '<br>'
 
     julian = julian_calendar(year)
     gregorian = gregorian_calendar(year)
@@ -41,8 +45,14 @@ def interleave(year):
     # Find Sunday.
     while gregorian[i][3] != 0: i += 1
 
+    prev = str(year - 1)
+    next = str(year + 1)
+
     print """
 <div align="center">
+<a href=\"""" + prev + """">&lt;&lt; prev</a>
+&nbsp;&nbsp;&nbsp;
+<a href=\"""" + next + """">next &gt;&gt;</a>
 <table border="1" cellspacing="0">
 <tr>
 <th width="100">Sunday</th>
@@ -60,7 +70,10 @@ def interleave(year):
             print '<tr>'
         print '<td height="100" valign="top">'
         jd = gregorian[i][0]
-        if jd == end_date: done = True
+        print str(jd) + '<br>'
+        if jd == end_date:
+            done = True
+            print 'Done!<br>'
         print 'G',
         print_calendar_entry(gregorian[i])
         print '<br>'
