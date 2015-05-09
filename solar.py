@@ -6,6 +6,7 @@ from PIL import Image
 
 AXIAL_TILT = radians(23.44)
 CHUNK_FACTOR = 16
+SCALE_FACTOR = 10
 
 # https://en.wikipedia.org/wiki/Solar_zenith_angle
 def solar_zenith_angle(day, lat):
@@ -23,10 +24,11 @@ def solar_declination(day):
     return -1 * asin(0.39779 * cos(0.01720283777228211 * (day + 10)
                                    + 0.03340560188317147 * sin(0.01720283777228211 * (day - 2))))
 
-im = Image.new('L', (365, 90))
-for day in range(365):
-    for lat in range(90):
-        angle = 2 * pi - solar_zenith_angle(day - 10, radians(90 - lat))
+im = Image.new('L', (365 * SCALE_FACTOR, 90 * SCALE_FACTOR))
+for day in range(365 * SCALE_FACTOR):
+    for lat in range(90 * SCALE_FACTOR):
+        angle = 2 * pi - solar_zenith_angle(day / SCALE_FACTOR - 10,
+                                            radians(90 - lat / SCALE_FACTOR))
         byte_angle = 256 * angle / (2 * pi)
         scaled_angle = max(0, 256 - 3 * (256 - byte_angle))
         chunked_angle = int((scaled_angle - CHUNK_FACTOR / 2)
