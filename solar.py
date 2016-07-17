@@ -7,6 +7,16 @@ from PIL import Image, ImageDraw
 AXIAL_TILT = radians(23.44)
 CHUNK_FACTOR = 16
 SCALE_FACTOR = 5
+VECTOR_FILES = [
+        'vectors/africa.bdy',
+        'vectors/austasia.bdy',
+        'vectors/billwvs.bdy',
+        'vectors/easia.bdy',
+        'vectors/europe.bdy',
+        'vectors/namerica.bdy',
+        'vectors/samerica.bdy',
+        'vectors/wasia.bdy',
+]
 
 # https://en.wikipedia.org/wiki/Solar_zenith_angle
 def solar_zenith_angle(day, lat):
@@ -27,7 +37,7 @@ def solar_declination(day):
 im = Image.new('L', (365 * SCALE_FACTOR, 180 * SCALE_FACTOR))
 for day in range(365 * SCALE_FACTOR):
     for lat in range(180 * SCALE_FACTOR):
-        angle = 2 * pi - solar_zenith_angle(day / SCALE_FACTOR - 10,
+        angle = 2 * pi - solar_zenith_angle(day / SCALE_FACTOR,
                                             radians(90 - lat / SCALE_FACTOR))
         byte_angle = 256 * angle / (2 * pi)
         scaled_angle = max(0, 256 - 3 * (256 - byte_angle))
@@ -35,23 +45,28 @@ for day in range(365 * SCALE_FACTOR):
                             / CHUNK_FACTOR) * CHUNK_FACTOR
         im.putpixel((day, lat), chunked_angle)
 
-f = open('/Users/jleen/Desktop/NAMERICA.BDY', 'r')
 draw = ImageDraw.Draw(im)
-prev = None
-for line in f:
-    if line.startswith('{'): continue
-    for coord in line.split(' '):
-        coord = coord.strip()
-        if len(coord) < 1: continue
 
-        if coord == '-1':
-            prev = None
-        else:
-            (lat, lng) = coord.split('+')
-            pt = ((float(lng) + 180) * SCALE_FACTOR,
-                  (90 - float(lat)) * SCALE_FACTOR)
-            if prev:
-                draw.line([prev, pt], fill=0)
-            prev = pt
+for month in range(1,12):
+    x = month * 365 * SCALE_FACTOR / 12
+    draw.line([(x,0), (x,180 * SCALE_FACTOR)], fill=256)
+for filename in VECTOR_FILES:
+    f = open(filename, 'r')
+    prev = None
+    for line in f:
+        if line.startswith('{'): continue
+        for coord in line.split(' '):
+            coord = coord.strip()
+            if len(coord) < 1: continue
+
+            if coord == '-1':
+                prev = None
+            else:
+                (lat, lng) = coord.split('+')
+                pt = ((float(lng) + 180) * SCALE_FACTOR,
+                      (90 - float(lat)) * SCALE_FACTOR)
+                if prev:
+                    draw.line([prev, pt], fill=0)
+                prev = pt
 
 im.save('solar.png', 'PNG')
